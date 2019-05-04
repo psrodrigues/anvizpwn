@@ -68,7 +68,7 @@ CMD_EMULATE_INTERACTION = b'\x78'  # Emulate a physical interaction on the devic
 CMD_GET_GPRS = b'\x16'  # Get GPRS
 CMD_SET_GPRS = b'\x16'  # Set GPRS
 CMD_GET_DEVICE_INFO_EXTENDED = b'\x7A'
-CMD_SET_DEVICE_INFO_EXTENDED = b'\x7A'
+CMD_SET_DEVICE_INFO_EXTENDED = b'\x7B'
 
 # This are commands for legacy equipment
 OA3000_CMD_GET_INDEX_MESSAGE = b'\x26'  # GET INDEX MESSAAGE FOR MODEL OA3000 ONLY
@@ -165,5 +165,125 @@ def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
 
 def getFactoryInfoCode(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_FACTORYINFOCODE, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getInitUserArea(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_INIT_USERDATA, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getInitSystem(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_INIT_SYSTEM, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getSchedualeBell(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_BELLINFO, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getHeadersOfMessages(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_MESSAGES_HEADERS, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getTAStateMessage(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_STATEMESSASE, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getDeviceCapacity(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_CAPACITY, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getStateTable(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_CUSTOMSTATETABLE, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getCOMMID(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_DEVICEID, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def clearAdminFlag(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_DEL_ADMIN_FLAG, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getRandomNumber(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_RANDOM, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getSerialNumber(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_SERIALNUMBER, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getSpecialState(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(VFP_CMD_GET_SPECIAL_STATE, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getPhotoAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_PHOTO_AMOUNT, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getPhotoAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_PHOTO_AMOUNT, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getAdminOrCardCredentials(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(T5X_CMD_GET_ADMIN, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getDaylight(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_DAYLIGHT, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getLanguages(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_LANG, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getGPRSSettings(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_GPRS, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getDeviceExtendedInformation(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_DEVICE_INFO_EXTENDED, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
+
+
+def getCardInfo(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(T5S_CMD_GET_PUNCHCARD, CH=CH)
     response = sendPayload(ip, port, payload)
     return response
