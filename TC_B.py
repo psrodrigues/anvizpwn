@@ -134,9 +134,30 @@ def sendPayload(ip, port, payload):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
     s.send(payload)
-    request = s.recv(512)
+    response = s.recv(512)
     s.close()
-    return request
+
+    # Creating the tuple of the data
+    preamble = response[0]  # 1 byte
+    deviceCode = response[1:5]  # 4 bytes
+    ack = response[5]  # 1 byte
+    returnValue = response[6]  # 1 byte
+    size = response[7:9]  # 2 bytes
+
+    # sanity check for data integrity
+    if (len(response) != (9 + size + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
+        raise Exception("Packet Size differs from actual size")
+
+    data = b''
+    crc = b''
+    if (size > 0):
+        data = response[9:(9 + size + 1)]  # start of data at 9th byte plus size of data plus 1 for the last byte
+        crc = response[(9 + size + 1):]  # From end of data to the end of the array
+    else:
+        crc = response[9:]  # no data, so just finish with the CRC
+
+    # return the packet
+    return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
 
 def openDoor(ip, port=5010, CH=b"\x00\x00\x00\x00"):
