@@ -190,13 +190,13 @@ def getFactoryInfoCode(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     return response
 
 
-def getInitUserArea(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+def initUserArea(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_INIT_USERDATA, CH=CH)
     response = sendPayload(ip, port, payload)
     return response
 
 
-def getInitSystem(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+def initSystem(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_INIT_SYSTEM, CH=CH)
     response = sendPayload(ip, port, payload)
     return response
@@ -267,11 +267,6 @@ def getPhotoAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     response = sendPayload(ip, port, payload)
     return response
 
-
-def getPhotoAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
-    payload = makePayload(CMD_GET_PHOTO_AMOUNT, CH=CH)
-    response = sendPayload(ip, port, payload)
-    return response
 
 
 def getAdminOrCardCredentials(ip, port=5010, CH=b"\x00\x00\x00\x00"):
