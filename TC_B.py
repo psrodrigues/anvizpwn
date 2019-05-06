@@ -3,6 +3,10 @@ import anvizCRC
 import struct
 import binascii
 
+# import thread module
+from _thread import *
+import threading
+
 # GLOBAL VARIABLES
 
 STX = b"\xA5"  # Preamble
@@ -111,7 +115,6 @@ ACK_TIME_OUT = b"\x08"  # capture timeout
 ACK_USER_OCCUPIED = b"\x0A"  # user already exists
 ACK_FINGER_OCCUPIED = b"\x0B"  # fingerprint already exists
 
-
 def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
     if len(data) < 0x190:
 
@@ -168,11 +171,13 @@ def sendPayload(ip, port, payload):
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
 def sendUDPPayload(payload, ip="255.255.255.255", port=5050):
+    print("[*] Sending payload: %s" % binascii.hexlify(payload))
     # create dgram udp socket
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     except socket.error:
-        print('Failed to create socket')
+        print('[!] Failed to create socket')
         sys.exit()
     s.sendto(payload, (ip, port))
     s.close()
@@ -181,35 +186,23 @@ def setUDPServer(ip='', port=5060):
     # Datagram (udp) socket
     try :
     	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    	print('Socket created')
+    	print('[*] Socket created')
     except:
-    	print('Failed to create socket')
-    	sys.exit()
-
+    	print('[!] Failed to create socket')
 
     # Bind socket to local ip and port
     try:
     	s.bind((ip, port))
     except:
-    	print('Bind failed')
+    	print('[*] Bind failed')
     	sys.exit()
 
-    print('Socket bind complete')
+    print('[*] UDP Socket listening')
 
-    #now keep talking with the client
-    while 1:
-    	# receive data from client (data, addr)
-    	d = s.recvfrom(1024)
-    	data = d[0]
-    	addr = d[1]
-
-    	if not data:
-    		break
-
-    	reply = 'OK...' + data
-
-    	s.sendto(reply , addr)
-    	print('Message[' + addr[0] + ':' + str(addr[1]) + '] - ' + data.strip())
+    # a forever loop until client wants to exit
+    while True:
+        print('[*] Waiting for incoming connections')
+        print(s.recvfrom(1024))
 
     s.close()
 
@@ -370,6 +363,7 @@ def dos(ip, port=5010, CH=b"\x00\x00\x00\x00"):
 
 def getDevices(ip="255.255.255.255", port=5050, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_DEVICES, CH=CH)
-    response = sendUDPPayload(payload)
+    start_new_thread(sendUDPPayload, (payload,))
     setUDPServer()
-    return response
+    #response = sendUDPPayload(payload)
+    #return response
