@@ -31,6 +31,8 @@ crcTable = [
 
 
 def crc16(input):
+
+
     i = 0
     l = 0
     crc = 0xFFFF
@@ -39,13 +41,11 @@ def crc16(input):
 
     for i in range(0, l, 1):
 
-        crc = crc ^ ord(input[i])
+        #crc = crc ^ ord(input[i])
+        crc = crc ^ input[i]
         crc = (crc >> 8) ^ crcTable[crc & 255]
 
-    res = str(crc)+""
-
-
-    return int(res)
+    return int(crc)
 
 #From https://stackoverflow.com/questions/27176317/bitwise-rotate-right
 def ror(n, rotations=1, width=8):
@@ -69,12 +69,4 @@ def mask1(n):
 
 def calculateRevAnvizCRC(payload):
     value = ror(crc16(payload), 8, width=2)
-    #CRCH = (0xFF00 & value) >> 8
-    #CRCL =  (0xFF & value)
     return value
-
-#\xa5\x00\x00\x00\x01\x3c\x00\x00\x49\xa9
-b = calculateRevAnvizCRC(str("\xa5\x00\x00\x00\x01\x3c\x00\x00"))
-
-b=struct.pack('>H', b)
-print(b)

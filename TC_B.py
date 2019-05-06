@@ -1,5 +1,7 @@
 import socket
 import anvizCRC
+import struct
+import binascii
 
 # GLOBAL VARIABLES
 
@@ -119,11 +121,11 @@ def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
             request = request + data
 
         # Add CRC16
-        CRC = anvizCRC.calculateRevAnvizCRC(str(request))
-        b = bytearray()
-        b.append(CRC[0])
-        b.append(CRC[1])
+        CRC = anvizCRC.calculateRevAnvizCRC(request)
+        b = struct.pack(">H", CRC)
         request = request + b
+
+        #print("[*] CRC: %s " % binascii.hexlify(request))
 
         return request
     else:
@@ -133,6 +135,7 @@ def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
 def sendPayload(ip, port, payload):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
+    print("[*] Sending payload: %s" % binascii.hexlify(payload))
     s.send(payload)
     response = s.recv(512)
     s.close()
@@ -144,6 +147,8 @@ def sendPayload(ip, port, payload):
     returnValue = response[6]  # 1 byte
     size = response[7:9]  # 2 bytes
 
+    print("[*] Response: %s" % binascii.hexlify(response))
+
     # sanity check for data integrity
     if (len(response) != (9 + size + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
         raise Exception("Packet Size differs from actual size")
@@ -151,7 +156,7 @@ def sendPayload(ip, port, payload):
     data = b''
     crc = b''
     if (size > 0):
-        data = response[9:(9 + size + 1)]  # start of data at 9th byte plus size of data plus 1 for the last byte
+        data = response[9:(9 + int(size) + 1)]  # start of data at 9th byte plus size of data plus 1 for the last byte
         crc = response[(9 + size + 1):]  # From end of data to the end of the array
     else:
         crc = response[9:]  # no data, so just finish with the CRC
@@ -159,6 +164,11 @@ def sendPayload(ip, port, payload):
     # return the packet
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
+
+def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_INFO, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
 
 def openDoor(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_OPENDOOR, CH=CH)

@@ -26,6 +26,10 @@ if __name__ == '__main__':
                         type=str, default=b"\x00\x00\x00\x00", nargs='?',
                         help='Channel or Device Identification')
 
+    parser.add_argument('--config', dest='config', action='store_true',
+                        default=False,
+                        help='Get config')
+
     parser.add_argument('--opendoor', dest='opendoor', action='store_true',
                         default=False,
                         help='Open door')
@@ -121,6 +125,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Started selecting arguments
+    if (args.config):
+        res = TC_B.getConfig(args.ip[0], port=args.port, CH=args.CH)
+        ResponseParser.parseSuccess(res)
+
     if (args.opendoor):
         res = TC_B.openDoor(args.ip[0], port=args.port, CH=args.CH)
         ResponseParser.parseSuccess(res)
