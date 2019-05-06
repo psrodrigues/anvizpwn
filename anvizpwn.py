@@ -122,6 +122,10 @@ if __name__ == '__main__':
                         default=False,
                         help='Get punchcard info from T5S devices')
 
+    parser.add_argument('--dos', dest='dos', action='store_true',
+                        default=False,
+                        help='Cause a denial of service (Not implemented yet)')
+
     args = parser.parse_args()
 
     # Started selecting arguments
@@ -217,5 +221,9 @@ if __name__ == '__main__':
         ResponseParser.parseSuccess(res)
 
     if (args.cardinfo):
+        res = TC_B.getCardInfo(args.ip[0], port=args.port, CH=args.CH)
+        ResponseParser.parseSuccess(res)
+
+    if (args.dos):
         res = TC_B.getCardInfo(args.ip[0], port=args.port, CH=args.CH)
         ResponseParser.parseSuccess(res)

