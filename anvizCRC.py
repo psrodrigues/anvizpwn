@@ -1,3 +1,5 @@
+import struct
+
 crcTable = [
     0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF, 0x8C48, 0x9DC1,
     0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7, 0x1081, 0x0108, 0x3393, 0x221A,
@@ -67,8 +69,12 @@ def mask1(n):
 
 def calculateRevAnvizCRC(payload):
     value = ror(crc16(payload), 8, width=2)
-    CRCH = (0xFF00 & value) >> 8
-    CRCL =  (0xFF & value)
-    return (CRCL,CRCH)
+    #CRCH = (0xFF00 & value) >> 8
+    #CRCL =  (0xFF & value)
+    return value
 
+#\xa5\x00\x00\x00\x01\x3c\x00\x00\x49\xa9
+b = calculateRevAnvizCRC(str("\xa5\x00\x00\x00\x01\x3c\x00\x00"))
 
+b=struct.pack('>H', b)
+print(b)
