@@ -126,6 +126,10 @@ if __name__ == '__main__':
                         default=False,
                         help='Cause a denial of service (Not implemented yet)')
 
+    parser.add_argument('--devices', dest='devices', action='store_true',
+                        default=False,
+                        help='Search for devices in the network')
+
     args = parser.parse_args()
 
     # Started selecting arguments
@@ -226,4 +230,8 @@ if __name__ == '__main__':
 
     if (args.dos):
         res = TC_B.getCardInfo(args.ip[0], port=args.port, CH=args.CH)
+        ResponseParser.parseSuccess(res)
+
+    if (args.devices):
+        res = TC_B.getDevices(args.ip[0], port=args.port, CH=args.CH)
         ResponseParser.parseSuccess(res)

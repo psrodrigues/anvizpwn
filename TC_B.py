@@ -72,6 +72,9 @@ CMD_SET_GPRS = b'\x16'  # Set GPRS
 CMD_GET_DEVICE_INFO_EXTENDED = b'\x7A'
 CMD_SET_DEVICE_INFO_EXTENDED = b'\x7B'
 
+# Reverse Engineered Information
+CMD_GET_DEVICES = b'\x02'  # GET DEVICES
+
 # This are commands for legacy equipment
 OA3000_CMD_GET_INDEX_MESSAGE = b'\x26'  # GET INDEX MESSAAGE FOR MODEL OA3000 ONLY
 OA3000_CMD_SET_INDEX_MESSAGE = b'\x27'  # SET INDEX MESSAAGE FOR MODEL OA3000 ONLY
@@ -164,6 +167,51 @@ def sendPayload(ip, port, payload):
     # return the packet
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
+def sendUDPPayload(payload, ip="255.255.255.255", port=5050):
+    # create dgram udp socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    except socket.error:
+        print('Failed to create socket')
+        sys.exit()
+    s.sendto(payload, (ip, port))
+    s.close()
+
+def setUDPServer(ip='', port=5060):
+    # Datagram (udp) socket
+    try :
+    	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    	print('Socket created')
+    except:
+    	print('Failed to create socket')
+    	sys.exit()
+
+
+    # Bind socket to local ip and port
+    try:
+    	s.bind((ip, port))
+    except:
+    	print('Bind failed')
+    	sys.exit()
+
+    print('Socket bind complete')
+
+    #now keep talking with the client
+    while 1:
+    	# receive data from client (data, addr)
+    	d = s.recvfrom(1024)
+    	data = d[0]
+    	addr = d[1]
+
+    	if not data:
+    		break
+
+    	reply = 'OK...' + data
+
+    	s.sendto(reply , addr)
+    	print('Message[' + addr[0] + ':' + str(addr[1]) + '] - ' + data.strip())
+
+    s.close()
 
 def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_INFO, CH=CH)
@@ -318,4 +366,10 @@ def dos(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     data = ''
     payload = makePayload(0xFF, data=data, CH=CH)
     response = sendPayload(ip, port, payload)
+    return response
+
+def getDevices(ip="255.255.255.255", port=5050, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_DEVICES, CH=CH)
+    response = sendUDPPayload(payload)
+    setUDPServer()
     return response
