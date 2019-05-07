@@ -25,6 +25,9 @@ if __name__ == '__main__':
     parser.add_argument('--channel', dest='CH',
                         type=str, default=b"\x00\x00\x00\x00", nargs='?',
                         help='Channel or Device Identification')
+    parser.add_argument('--timeout', dest='timeout',
+                        type=int, default=5, nargs='?',
+                        help='Time out value')
 
     parser.add_argument('--config', dest='config', action='store_true',
                         default=False,
@@ -233,6 +236,5 @@ if __name__ == '__main__':
         ResponseParser.parseSuccess(res)
 
     if (args.devices):
-        res = TC_B.getDevices(args.ip[0])
-        for device in res:
-            ResponseParser.parseSuccess(device)
+        res = TC_B.getDevices(args.ip[0], timeout=args.timeout)
+        # ResponseParser.parseSuccess(device)

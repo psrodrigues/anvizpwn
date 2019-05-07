@@ -2,6 +2,7 @@ import socket
 import anvizCRC
 import struct
 import binascii
+import ipaddress
 
 import time
 
@@ -175,7 +176,7 @@ def sendPayload(ip, port, payload):
 def sendUDPBroadcast(ip="255.255.255.255", sport=5060, dport=5050):
     scapy.all.sendp( Ether(dst="ff:ff:ff:ff:ff:ff")/Dot1Q(vlan=1)/IP(dst=ip)/UDP(sport=sport,dport=dport)/Raw(load=b'\xa5\x00\x00\x00\x00\x02\x00\x00\x47\x23') )
 
-def setUDPServer(ip='', port=5060):
+def setUDPServer(ip='', port=5060, timeout=5):
     # Datagram (udp) socket
     try :
     	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -190,8 +191,8 @@ def setUDPServer(ip='', port=5060):
     	sys.exit()
 
     print('[*] Searching for devices')
-    s.settimeout(5)
-    timeout = time.time() + 5
+    s.settimeout(timeout)
+    timeout = time.time() + timeout
     deviceCounter = 0
     responses = []
 
@@ -202,10 +203,12 @@ def setUDPServer(ip='', port=5060):
             response = s.recvfrom(1024)
             responses.append(response)
             deviceCounter = deviceCounter + 1
-            print(response)
+
+            #print(response)
         except socket.timeout:
             print("[*] Found %d devices" % deviceCounter)
     s.close()
+    return responses
 
 def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_INFO, CH=CH)
@@ -362,7 +365,50 @@ def dos(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     response = sendPayload(ip, port, payload)
     return response
 
-def getDevices(ip="255.255.255.255"):
+def getDevices(ip="255.255.255.255", timeout=5):
     sendUDPBroadcast(ip=ip,sport=5060, dport=5050)
-    response = setUDPServer()
+    responses = setUDPServer(timeout=timeout)
+
+    for (response, (ip, port)) in responses:
+
+        # Creating the tuple of the data
+        preamble = response[0]  # 1 byte
+        deviceCode = response[1:5]  # 4 bytes
+        ack = response[5]  # 1 byte
+        returnValue = response[6]  # 1 byte
+        size = response[7:9]  # 2 bytes
+        size = struct.unpack(">H", size)[0]
+
+        # sanity check for data integrity
+        if (len(response) != (9 + size + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
+            raise Exception("Packet Size differs from actual size")
+
+        data = b''
+        crc = b''
+        if (size > 0):
+            data = response[9:(9 + int(size) + 1)]  # start of data at 9th byte plus size of data plus 1 for the last byte
+
+            model = data[0:4]
+            serialnumber = data[10:26]
+            device_ip = data[26:30]
+            netmask = data[30:34]
+            gateway = data[34:38]
+            # 13 bytes do discover
+            firmware_version = data[51:59]
+
+            print("[*] Response from %s:%d" % (ip, port))
+            print("[*] Serial number: %s" % serialnumber)
+            print("[*] Firmware version: %s" % firmware_version)
+            print("[*] Network information:")
+            print("[*] \tIP: %s" % ipaddress.IPv4Address(device_ip))
+            print("[*] \tNetmask: %s" % ipaddress.IPv4Address(netmask))
+            print("[*] \tGateway: %s" % ipaddress.IPv4Address(gateway))
+
+            crc = response[(9 + size + 1):]  # From end of data to the end of the array
+        else:
+            crc = response[9:]  # no data, so just finish with the CRC
+
+        # return the packet
+        return (preamble, deviceCode, ack, returnValue, size, data, crc)
+
     return response
