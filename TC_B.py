@@ -3,9 +3,11 @@ import anvizCRC
 import struct
 import binascii
 
-# import thread module
-from _thread import *
-import threading
+import time
+
+# Scapy
+from scapy.all import Raw,IP,Dot1Q,UDP,Ether
+import scapy.all
 
 # GLOBAL VARIABLES
 
@@ -170,40 +172,39 @@ def sendPayload(ip, port, payload):
     # return the packet
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
-def sendUDPPayload(payload, ip="255.255.255.255", port=5050):
-    print("[*] Sending payload: %s" % binascii.hexlify(payload))
-    # create dgram udp socket
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    except socket.error:
-        print('[!] Failed to create socket')
-        sys.exit()
-    s.sendto(payload, (ip, port))
-    s.close()
+def sendUDPBroadcast(ip="255.255.255.255", sport=5060, dport=5050):
+    scapy.all.sendp( Ether(dst="ff:ff:ff:ff:ff:ff")/Dot1Q(vlan=1)/IP(dst=ip)/UDP(sport=sport,dport=dport)/Raw(load=b'\xa5\x00\x00\x00\x00\x02\x00\x00\x47\x23') )
 
 def setUDPServer(ip='', port=5060):
     # Datagram (udp) socket
     try :
     	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    	print('[*] Socket created')
     except:
-    	print('[!] Failed to create socket')
+    	print('[!] Failed to create server socket')
 
     # Bind socket to local ip and port
     try:
     	s.bind((ip, port))
     except:
-    	print('[*] Bind failed')
+    	print('[*] Server socket bind failed')
     	sys.exit()
 
-    print('[*] UDP Socket listening')
+    print('[*] Searching for devices')
+    s.settimeout(5)
+    timeout = time.time() + 5
+    deviceCounter = 0
+    responses = []
 
-    # a forever loop until client wants to exit
     while True:
-        print('[*] Waiting for incoming connections')
-        print(s.recvfrom(1024))
-
+        if time.time() > timeout:
+            break
+        try:
+            response = s.recvfrom(1024)
+            responses.append(response)
+            deviceCounter = deviceCounter + 1
+            print(response)
+        except socket.timeout:
+            print("[*] Found %d devices" % deviceCounter)
     s.close()
 
 def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
@@ -361,9 +362,7 @@ def dos(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     response = sendPayload(ip, port, payload)
     return response
 
-def getDevices(ip="255.255.255.255", port=5050, CH=b"\x00\x00\x00\x00"):
-    payload = makePayload(CMD_GET_DEVICES, CH=CH)
-    start_new_thread(sendUDPPayload, (payload,))
-    setUDPServer()
-    #response = sendUDPPayload(payload)
-    #return response
+def getDevices(ip="255.255.255.255"):
+    sendUDPBroadcast(ip=ip,sport=5060, dport=5050)
+    response = setUDPServer()
+    return response

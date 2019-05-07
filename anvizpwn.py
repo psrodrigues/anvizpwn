@@ -233,5 +233,6 @@ if __name__ == '__main__':
         ResponseParser.parseSuccess(res)
 
     if (args.devices):
-        res = TC_B.getDevices(args.ip[0], port=args.port, CH=args.CH)
-        ResponseParser.parseSuccess(res)
+        res = TC_B.getDevices(args.ip[0])
+        for device in res:
+            ResponseParser.parseSuccess(device)
