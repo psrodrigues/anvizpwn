@@ -273,6 +273,7 @@ def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
             user_id = struct.unpack(">I", user_id)[0]
 
             card_id = data[(base+8):(base+12)]
+            card_id = int.from_bytes(card_id, byteorder="big", signed=False)
             name = data[(base+12):(base+22)]
             department = data[(base+23)]
             group = data[(base+24)]
@@ -283,10 +284,10 @@ def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
             special_info = data[(base+30)]
 
             print("[*] User: %s" % user_id)
-            print("[*] Password_len: %s" % passwd_len)
-            print("[*] Password: %s" % passwd)
-            print("[*] Card ID: %s" % card_id)
-            print("[*] Name: %s" % name)
+            print("[*] \tName: %s" % name)
+            print("[*] \tPassword_len: %s" % passwd_len)
+            print("[*] \tPassword: %s" % passwd)
+            print("[*] \tCard ID: %s\n" % card_id)
 
             user_count = user_count + 1
             user_count_page = user_count_page + 1
