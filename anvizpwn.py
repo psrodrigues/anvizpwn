@@ -49,6 +49,10 @@ if __name__ == '__main__':
                         default=False,
                         help='Get User records stored on the device')
 
+    parser.add_argument('--useramount', dest='useramount', action='store_true',
+                        default=False,
+                        help='Get just amount of user records stored on the device')
+
     parser.add_argument('--factoryinfocode', dest='factoryinfocode', action='store_true',
                         default=False,
                         help='Get Factory information code')
@@ -154,6 +158,10 @@ if __name__ == '__main__':
 
     if (args.userrecords):
         res = TC_B.getUserRecords(args.ip[0], port=args.port, CH=args.CH)
+        ResponseParser.parseSuccess(res)
+
+    if (args.useramount):
+        res = TC_B.getUserRecordsAmount(args.ip[0], port=args.port, CH=args.CH)
         ResponseParser.parseSuccess(res)
 
     if (args.factoryinfocode):

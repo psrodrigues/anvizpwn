@@ -143,6 +143,7 @@ def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
 
 def sendPayload(ip, port, payload):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(3.0)
     s.connect((ip, port))
     #print("[*] Sending payload: %s" % binascii.hexlify(payload))
     s.send(payload)
@@ -214,8 +215,23 @@ def setUDPServer(ip='', port=5060, timeout=5):
 
 def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_INFO, CH=CH)
-    response = sendPayload(ip, port, payload)
-    return response
+    (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
+
+    # Creating the tuple of the data
+    firmware_version = data[0:8]  # 1 byte
+    comm_password = data[8:11]  # 4 bytes
+
+    # comm_password_len = binascii.hexlify(data[8]])[1:6] # ignore first 4 bits for password length
+    prepend_bits = bytearray(b'0')
+    password_array = bytearray(passwd)
+    password_array = prepend_bits + password_array
+    passwd = int.from_bytes(codecs.decode(password_array, 'hex'), byteorder="big", signed=True)
+    sleep_time = data[8:11]
+
+
+    print(data)
+    return data
+    # return response
 
 def openDoor(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_OPENDOOR, CH=CH)
@@ -225,8 +241,10 @@ def openDoor(ip, port=5010, CH=b"\x00\x00\x00\x00"):
 
 def getDateOfDevice(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_DATE, CH=CH)
-    response = sendPayload(ip, port, payload)
-    return response
+    (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
+    print(data)
+    return data
+    # return response
 
 
 def getNetwork(ip, port=5010, CH=b"\x00\x00\x00\x00"):
@@ -234,6 +252,20 @@ def getNetwork(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     response = sendPayload(ip, port, payload)
     return response
 
+def getUserRecordsAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
+    payload = makePayload(CMD_GET_RECORDS, CH=CH)
+    (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
+
+    user_amount = data[1:3]
+    fp_amount = data[4:6]
+    password_amount = data[7:9]
+    card_amount = data[10:12]
+    all_record_amount = data[13:15]
+    new_record_amount = data[16:18]
+
+    user_amount = struct.unpack(">H", user_amount)[0]
+    print("\n[%s] Number of users: %d\n" % (ip, int(user_amount)))
+    return (user_amount, fp_amount, password_amount, card_amount, all_record_amount, new_record_amount)
 
 def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_RECORDS, CH=CH)

@@ -17,22 +17,25 @@ def testip(i, cv, ip, outdir):
         cv.wait()
 
     active_threads = active_threads+1
-    print("[%s] Thread: %d starting (active threads %d)" % (ip, i, active_threads))
+    # print("[%s] Thread: %d starting (active threads %d)" % (ip, i, active_threads))
     cv.release()
 
     # Call function
     try:
-        (preamble, deviceCode, ack, returnValue, size, data, crc) = TC_B.getDateOfDevice(ip, 5010, b"\x00\x00\x00\x00")
-        print("[%s] Success!! (%s)" % (ip, data))
-        f = open(outfile, "a+")
-        f.write(data)
-        f.close()
-    except:
+        # (preamble, deviceCode, ack, returnValue, size, data, crc) = TC_B.getDateOfDevice(ip, 5010, b"\x00\x00\x00\x00")
+        (user_amount, fp_amount, password_amount, card_amount, all_record_amount, new_record_amount) = TC_B.getUserRecordsAmount(ip, 5010, b"\x00\x00\x00\x00")
+        if user_amount:
+            print("\n[%s] Success!! (%s)\n" % (ip, user_amount))
+            f = open(outfile, "a+")
+            f.write(user_amount)
+            f.close()
+    except Exception as e:
+        # print("\n[%s] Error while writing response: %s" % (ip, e))
         a = 1
         # do nothing
 
     cv.acquire()
-    print("Thread: %d finishing (active threads %d)" % (i, active_threads))
+    # print("Thread: %d finishing (active threads %d)" % (i, active_threads))
     active_threads = active_threads-1
     cv.notifyAll()
     cv.release()
@@ -61,4 +64,4 @@ for i in range(0,len(ip_list)):
     args.append(i)
     t = threading.Thread(target=testip, args=(args[i], cv, ip_list[i], sys.argv[3]))
     t.start()
-    print("main loop %d" % i)
+    # print("main loop %d" % i)
