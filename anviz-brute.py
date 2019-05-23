@@ -10,7 +10,7 @@ if len(sys.argv) < 3:
     sys.exit(1)
 
 def testip(i, cv, ip, outdir):
-    outfile = "/Users/luiscatarino/"+outdir+"/"+ip+".txt"
+    outfile = outdir+"/"+ip+".txt"
     global active_threads
     cv.acquire()
     while not active_threads < max_threads:
@@ -25,7 +25,7 @@ def testip(i, cv, ip, outdir):
         (preamble, deviceCode, ack, returnValue, size, data, crc) = TC_B.getDateOfDevice(ip, 5010, b"\x00\x00\x00\x00")
         print("[%s] Success!! (%s)" % (ip, data))
         f = open(outfile, "a+")
-        f.write(response)
+        f.write(data)
         f.close()
     except:
         a = 1
@@ -47,13 +47,18 @@ with open(sys.argv[2], 'r') as f:
   for line in f:
     ip_list.append(line.strip())
 
-os.system("mkdir /Users/luiscatarino/" + sys.argv[3])
+os.system("mkdir " + sys.argv[3])
 
 # main program
 max_threads = int(sys.argv[1])
 cv = threading.Condition()
 for i in range(0,len(ip_list)):
+    cv.acquire()
+    while active_threads >= max_threads:
+        cv.wait()
+    cv.notifyAll()
+    cv.release()
     args.append(i)
     t = threading.Thread(target=testip, args=(args[i], cv, ip_list[i], sys.argv[3]))
     t.start()
-    print("main loop %d",i)
+    print("main loop %d" % i)
