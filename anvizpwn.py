@@ -137,6 +137,10 @@ if __name__ == '__main__':
                         default=False,
                         help='Search for devices in the network')
 
+    parser.add_argument('--fuzz', dest='fuzz', action='store_true',
+                        default=False,
+                        help='Emulate and Fuzz the device')
+
     args = parser.parse_args()
 
     # Started selecting arguments
@@ -246,3 +250,6 @@ if __name__ == '__main__':
     if (args.devices):
         res = TC_B.getDevices(args.ip[0], timeout=args.timeout)
         # ResponseParser.parseSuccess(device)
+
+    if (args.fuzz):
+        res = TC_B.fuzzDevice()
