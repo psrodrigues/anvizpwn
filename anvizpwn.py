@@ -252,4 +252,4 @@ if __name__ == '__main__':
         # ResponseParser.parseSuccess(device)
 
     if (args.fuzz):
-        res = TC_B.fuzzDevice()
+        res = TC_B.fuzzDevice(args.ip[0])

